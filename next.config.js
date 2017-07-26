@@ -1,26 +1,30 @@
 const path = require('path')
-const glob = require('glob')
-const fs  = require('fs')
-const lessToJs = require('less-vars-to-js')
-const themeVariables = lessToJs(fs.readFileSync(path.join(__dirname, './ant-theme-vars.less'), 'utf8'))
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+
 module.exports = {
   webpack: (config, { dev }) => {
-
     config.module.rules.push(
       {
+        test: /\.(less)/,
+        loader: 'emit-file-loader',
+        options: {
+          name: 'dist/[path][name].[ext]'
+        }
+      },
+      {
         test: /\.less$/,
-        use: [
-          {loader: "style-loader"},
-          {loader: "css-loader"},
-          {loader: "less-loader",
-            options: {
-              modifyVars: themeVariables,
-              root: path.resolve(__dirname, './')
-            }
-          }
-        ]
+        loader: ExtractTextPlugin.extract({
+                        fallback: 'style-loader',
+                        use: "css-loader!less-loader",
+                })
+        // use this for development - see here https://github.com/aoc/with-ant-design-custom-theme
+        //use: ['babel-loader', 'raw-loader', 'less-loader']
       }
-    )
+    );
+
+    config.plugins.push(
+        new ExtractTextPlugin(__dirname + '/static/styles.css')
+    );
 
     return config
   }
